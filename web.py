@@ -1,16 +1,29 @@
-from reactpy import component, html, run
+from reactpy import component, html, run, event
 from reactpy.backend.fastapi import configure
 from fastapi import FastAPI, UploadFile
 from fastapi.responses import Response 
+import uvicorn
 
 import qrcode
 import qrcode.image.svg
 
+import socket
+
+def get_ip_address():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+    s.connect(('114.114.114.114', 53))
+    return s.getsockname()[0]
+
 app = FastAPI()
+
+# Backend
+@app.post('/clipboard')
+async def clipboard():
+    pass
 
 @app.get('/qrcode')
 async def get_qrcode():
-    url = 'http://127.0.0.1:8000'
+    url = f'http://{get_ip_address()}:8000'
     qr = qrcode.QRCode(
         image_factory=qrcode.image.svg.SvgPathImage,
         box_size=20,
@@ -35,17 +48,42 @@ async def upload(files: list[UploadFile]):
             file.file.close()
     return {'message': f'Successfuly uploaded {[file.filename for file in files]}'} 
 
+@app.get('download')
+async def download():
+    pass
+
+# Front End
+
 @component
-def HelloWorld():
+def index():
+    @event(prevent_default=True)
+    def handle_clipboard(data):
+        print(data)
+
+    vertical_align_style = {
+        'display': 'flex',
+        'flex-direction': 'column',
+        'align-items': 'flex-start',
+    }
     return html.div(
+        {'style': vertical_align_style},
+        html.h3('剪贴板：'),
+        html.form(
+            {'action': '/clipboard', 'method': 'post', 'style': vertical_align_style},
+            html.textarea({'name': 'clipboard', 'rows': '3', 'cols': 25}),
+            html.input({'type': 'submit', 'on_click': handle_clipboard}),
+        ),
         html.h3('上传文件：'),
         html.form(
-            {'action': '/upload', 'enctype': 'multipart/form-data', 'method': 'post'},
+            {'action': '/upload', 'method': 'post', 'enctype': 'multipart/form-data', 'style': vertical_align_style},
             html.input({'name': 'files', 'type': 'file', 'multiple': True}),
             html.input({'type': 'submit'}),
         ),
         html.h3('扫码访问服务器：'),
+        html.input({'type': 'text', 'readonly': True, 'value': f'http://{get_ip_address()}:8000'}),
         html.img({'src': '/qrcode', 'alt': 'qrcode not display', 'style': {'height': '200px'}}),
     )
 
-configure(app, HelloWorld)
+if __name__ == '__main__':
+    configure(app, index)
+    uvicorn.run(app, host='0.0.0.0', port=8000)
