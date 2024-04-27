@@ -1,13 +1,17 @@
 from reactpy import component, html, run, event
 from reactpy.backend.fastapi import configure
 from fastapi import FastAPI, UploadFile
-from fastapi.responses import Response 
+from fastapi.responses import Response
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 
 import qrcode
 import qrcode.image.svg
 
 import socket
+
+download_path = 'C:/Users/sizzle/Downloads'
+download_file = '/static/1.jpg'
 
 def get_ip_address():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
@@ -38,7 +42,7 @@ async def get_qrcode():
 async def upload(files: list[UploadFile]):
     for file in files:
         try:
-            dst_file = f'C:/Users/xu_q2/Downloads/{file.filename}'
+            dst_file = f'{download_path}/{file.filename}'
             with open(dst_file, 'wb') as f:
                 while contents := file.file.read(1024 * 1024):
                     f.write(contents)
@@ -52,6 +56,7 @@ async def upload(files: list[UploadFile]):
 async def download():
     pass
 
+app.mount('/static', StaticFiles(directory='static', html=True), name='static')
 # Front End
 
 @component
@@ -79,6 +84,8 @@ def index():
             html.input({'name': 'files', 'type': 'file', 'multiple': True}),
             html.input({'type': 'submit'}),
         ),
+        html.h3('下载文件：'),
+        html.a({'href': f'{download_file}'}, f'http://{get_ip_address()}:8000{download_file}'),
         html.h3('扫码访问服务器：'),
         html.input({'type': 'text', 'readonly': True, 'value': f'http://{get_ip_address()}:8000'}),
         html.img({'src': '/qrcode', 'alt': 'qrcode not display', 'style': {'height': '200px'}}),
