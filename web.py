@@ -4,14 +4,13 @@ from fastapi import FastAPI, UploadFile
 from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 import uvicorn
-
 import qrcode
 import qrcode.image.svg
-
 import socket
+import pathlib
 
 download_path = 'C:/Users/xu_q2/Downloads'
-download_file = '/static/1.jpg'
+download_uri = '/static/'
 
 def get_ip_address():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
@@ -51,12 +50,12 @@ async def upload(files: list[UploadFile]):
 async def download():
     pass
 
-app.mount('/static', StaticFiles(directory='static', html=True), name='static')
+app.mount('/static', StaticFiles(directory='C:/Users/xu_q2/Downloads'), name='static')
 message = ''
+
 # Front End
 @component
 def index():
-    global message
     @event(prevent_default=True)
     def handle_clipboard(event):
         global message
@@ -67,7 +66,9 @@ def index():
         'flex-direction': 'column',
         'align-items': 'flex-start',
     }
-    print(f'render index, message: {message}')
+
+    download_list = [html.a({'href': f'{download_uri}{file.name}'}, f'{file.name}') for file in pathlib.Path(download_path).glob('*')]
+
     return html.div(
         {'style': vertical_align_style},
         html.h3('剪贴板：'),
@@ -82,7 +83,7 @@ def index():
             html.input({'type': 'submit'}),
         ),
         html.h3('下载文件：'),
-        html.a({'href': f'{download_file}'}, f'http://{get_ip_address()}:8000{download_file}'),
+        download_list,
         html.h3('扫码访问服务器：'),
         html.input({'type': 'text', 'readonly': True, 'value': f'http://{get_ip_address()}:8000'}),
         html.img({'src': '/qrcode', 'alt': 'qrcode not display', 'style': {'height': '200px'}}),
