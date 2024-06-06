@@ -1,4 +1,4 @@
-from reactpy import component, html, run, event
+from reactpy import component, html, run, event, use_state
 from reactpy.backend.fastapi import configure
 from fastapi import FastAPI, UploadFile
 from fastapi.responses import Response
@@ -10,7 +10,7 @@ import qrcode.image.svg
 
 import socket
 
-download_path = 'C:/Users/sizzle/Downloads'
+download_path = 'C:/Users/xu_q2/Downloads'
 download_file = '/static/1.jpg'
 
 def get_ip_address():
@@ -19,11 +19,6 @@ def get_ip_address():
     return s.getsockname()[0]
 
 app = FastAPI()
-
-# Backend
-@app.post('/clipboard')
-async def clipboard():
-    pass
 
 @app.get('/qrcode')
 async def get_qrcode():
@@ -57,26 +52,28 @@ async def download():
     pass
 
 app.mount('/static', StaticFiles(directory='static', html=True), name='static')
+message = ''
 # Front End
-
 @component
 def index():
+    global message
     @event(prevent_default=True)
-    def handle_clipboard(data):
-        print(data)
+    def handle_clipboard(event):
+        global message
+        message = event['target']['value']
 
     vertical_align_style = {
         'display': 'flex',
         'flex-direction': 'column',
         'align-items': 'flex-start',
     }
+    print(f'render index, message: {message}')
     return html.div(
         {'style': vertical_align_style},
         html.h3('剪贴板：'),
         html.form(
             {'action': '/clipboard', 'method': 'post', 'style': vertical_align_style},
-            html.textarea({'name': 'clipboard', 'rows': '3', 'cols': 25}),
-            html.input({'type': 'submit', 'on_click': handle_clipboard}),
+            html.textarea({'name': 'clipboard', 'rows': '3', 'cols': 25, 'on_change': handle_clipboard, 'value': message}),
         ),
         html.h3('上传文件：'),
         html.form(
