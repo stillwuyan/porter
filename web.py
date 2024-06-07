@@ -9,7 +9,7 @@ import qrcode.image.svg
 import socket
 import pathlib
 
-download_path = 'C:/Users/xu_q2/Downloads'
+download_path = 'C:/Users/sizzle/Downloads'
 download_uri = '/static/'
 
 def get_ip_address():
@@ -50,7 +50,7 @@ async def upload(files: list[UploadFile]):
 async def download():
     pass
 
-app.mount('/static', StaticFiles(directory='C:/Users/xu_q2/Downloads'), name='static')
+app.mount('/static', StaticFiles(directory=download_path), name='static')
 message = ''
 
 # Front End
