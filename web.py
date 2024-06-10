@@ -62,31 +62,91 @@ def index():
         message = event['target']['value']
 
     vertical_align_style = {
-        'display': 'flex',
-        'flex-direction': 'column',
-        'align-items': 'flex-start',
     }
 
-    download_list = [html.a({'href': f'{download_uri}{file.name}'}, f'{file.name}') for file in pathlib.Path(download_path).glob('*')]
-
     return html.div(
-        {'style': vertical_align_style},
+        html.style('''
+            .vertical-align {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            textarea {
+                width: 252px;
+                border: 1px solid #EEE
+            }
+            .input_container {
+                border: 1px solid #E5E5E5;
+            }
+            input[type=file]::file-selector-button {
+                background-color: #EEE;
+                color: #000;
+                border: 1px;
+                border-right: 1px solid #E5E5E5;
+                padding: 10px 10px;
+                margin-right: 10px;
+                width: 80px;
+            }
+            input[type=file]::file-selector-button:hover {
+                background-color: #CCC;
+                border: 0px;
+                border-right: 1px solid #E5E5E5;
+            }
+            input[type=submit] {
+                background-color: #EEE;
+                color: #000;
+                border: 1px;
+                border-right: 1px solid #E5E5E5;
+                padding: 10px 10px;
+                width: 80px;
+                margin-top: 5px;
+            }
+            input[type=submit]:hover {
+                background-color: #CCC;
+                border: 0px;
+                border-right: 1px solid #e5e5e5;
+            }
+            p {
+                margin: 0px;
+                padding: 5px;
+                border: 1px solid #e5e5e5;
+            }
+        '''),
         html.h3('剪贴板：'),
-        html.form(
-            {'action': '/clipboard', 'method': 'post', 'style': vertical_align_style},
-            html.textarea({'name': 'clipboard', 'rows': '3', 'cols': 25, 'on_change': handle_clipboard, 'value': message}),
+        html.div(
+            {'class_name': 'vertical-align'},
+            html.textarea({
+                'name': 'clipboard',
+                'rows': '3',
+                'on_change': handle_clipboard,
+                'value': message
+            }),
         ),
         html.h3('上传文件：'),
         html.form(
-            {'action': '/upload', 'method': 'post', 'enctype': 'multipart/form-data', 'style': vertical_align_style},
-            html.input({'name': 'files', 'type': 'file', 'multiple': True}),
+            {
+                'class_name': 'vertical-align',
+                'action': '/upload',
+                'method': 'post',
+                'enctype': 'multipart/form-data'
+            },
+            html.div(
+                {'class_name': 'input_container'},
+                html.input({'name': 'files', 'type': 'file', 'multiple': True})
+            ),
             html.input({'type': 'submit'}),
         ),
         html.h3('下载文件：'),
-        download_list,
+        html.div(
+            {'class_name': 'vertical-align'},
+            [html.a({'href': f'{download_uri}{file.name}'}, f'{file.name}') for file in pathlib.Path(download_path).glob('*')],
+        ),
         html.h3('扫码访问服务器：'),
-        html.input({'type': 'text', 'readonly': True, 'value': f'http://{get_ip_address()}:8000'}),
-        html.img({'src': '/qrcode', 'alt': 'qrcode not display', 'style': {'height': '200px'}}),
+        html.div(
+            {'class_name': 'vertical-align'},
+            html.p(f'URL: http://{get_ip_address()}:8000'),
+            html.img({'src': '/qrcode', 'alt': 'qrcode not display'}),
+        )
     )
 
 if __name__ == '__main__':
